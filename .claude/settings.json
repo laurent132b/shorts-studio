@@ -1,0 +1,21 @@
+{
+  "env": {
+    "HYPERFRAMES_SKIP_SKILLS": "1",
+    "HYPERFRAMES_NO_TELEMETRY": "1",
+    "PYTHONUTF8": "1"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/tools/verifier_poste.py\" --hook",
+            "timeout": 30,
+            "statusMessage": "Verification du poste..."
+          }
+        ]
+      }
+    ]
+  }
+}

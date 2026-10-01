@@ -1,0 +1,12 @@
+{
+  "name": "shorts-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Montage automatique de shorts filmes au telephone, habillage avec HyperFrames.",
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "hyperframes": "^0.8.103"
+  }
+}

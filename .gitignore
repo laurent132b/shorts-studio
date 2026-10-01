@@ -1,0 +1,34 @@
+# Les medias de chaque video : rushs, originaux, masters, rendus. Lourds, jamais versionnes.
+videos/*/_media/
+
+# Le projet HyperFrames d'une video porte une copie du master et ses rendus.
+videos/*/2_habillage/**/*.mp4
+videos/*/2_habillage/**/*.mov
+videos/*/2_habillage/**/*.webm
+videos/*/2_habillage/**/*.mp3
+videos/*/2_habillage/**/*.wav
+videos/*/2_habillage/**/*.m4a
+videos/*/2_habillage/**/frames*/
+videos/*/2_habillage/**/renders/
+
+# Filet : aucun media ne doit entrer dans git, ou qu'il soit.
+*.mp4
+*.mov
+*.m4v
+*.mkv
+*.wav
+*.mp3
+*.m4a
+# Les sons de la banque SFX de media-use (Pixabay) ne sont PAS redistribues : leur licence
+# interdit de les diffuser tels quels. Ils sont ignores par la regle *.mp3 ci-dessus.
+
+# Secrets, modeles, dependances, caches
+.env
+models/*
+!models/.gitkeep
+node_modules/
+__pycache__/
+*.pyc
+.punch-reperes/
+*.part
+*.tmp

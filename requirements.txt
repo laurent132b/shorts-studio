@@ -1,0 +1,11 @@
+# Modules Python de la chaine de montage.
+#
+#     python -m pip install -r requirements.txt
+#
+# numpy           : obligatoire (mesure de l'audio pour les coupes)
+# opencv-python   : le punch-in (detection du visage avec YuNet)
+# faster-whisper  : la transcription LOCALE, sans cle ElevenLabs (moins bonne, voir /demarrer).
+#                   Lourde : un modele se telecharge au premier lancement.
+numpy>=2.0
+opencv-python>=4.10
+faster-whisper>=1.0

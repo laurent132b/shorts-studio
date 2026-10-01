@@ -1,0 +1,3 @@
+# Cle client PostHog publique de HeyGen (telemetrie du skill media-use, coupee ici par
+# HYPERFRAMES_NO_TELEMETRY=1). Ce n est pas un secret : elle est publiee dans heygen-com/hyperframes.
+.claude/skills/media-use/scripts/lib/telemetry.mjs:generic-api-key:12

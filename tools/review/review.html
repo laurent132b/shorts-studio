@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review du montage</title>
+<style>
+  /* Un outil de relecture, pas une page publique : sobre, sombre comme une salle de montage,
+     un seul accent. Tout ce qui se lit est visible sans
+     scroller ; seule la liste des retours defile. */
+  :root {
+    --fond: #16181d; --fond2: #1e2128; --fond3: #262a33; --trait: #343945;
+    --texte: #e9ecf1; --texte2: #9aa4b2; --accent: #8fd3b6; --accent-encre: #10241b;
+    --alerte: #f2b56b; --danger: #ef8a7a;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--fond); color: var(--texte);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: grid; grid-template-columns: minmax(360px, 44%) 1fr; height: 100vh; overflow: hidden; }
+  .lecteur { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: #0f1114;
+    min-height: 0; }
+  video { flex: 1 1 0; min-height: 0; width: 100%; object-fit: contain; background: #000;
+    border-radius: 10px; }
+  .frise { position: relative; padding-top: 10px; }
+  .frise input { width: 100%; margin: 0; }
+  .marques { position: absolute; top: 0; left: 0; right: 0; height: 8px; }
+  .marques span { position: absolute; width: 3px; height: 8px; background: var(--accent);
+    border-radius: 2px; cursor: pointer; transform: translateX(-1px); }
+  .cmd { display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  button { cursor: pointer; font: inherit; }
+  .cmd button { background: var(--fond3); color: var(--texte); border: 1px solid var(--trait);
+    border-radius: 8px; padding: 7px 11px; font-weight: 600; }
+  .cmd button:hover, .cmd button:focus-visible { border-color: var(--accent); outline: none; }
+  .cmd .lire { background: var(--accent); color: var(--accent-encre); border-color: transparent; min-width: 44px; }
+  .tc { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 15px;
+    color: var(--accent); letter-spacing: .04em; min-width: 150px; text-align: center;
+    font-variant-numeric: tabular-nums; }
+  .vit { display: flex; gap: 4px; margin-left: 6px; padding-left: 10px; border-left: 1px solid var(--trait); }
+  .vit button { padding: 6px 8px; font-size: 12px; }
+  .vit button.on { color: var(--accent); border-color: var(--accent); }
+  .etat { font-size: 12px; color: var(--texte2); text-align: center; min-height: 1.4em; }
+
+  .retours { display: flex; flex-direction: column; gap: 12px; padding: 18px 22px; min-height: 0; }
+  h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em; text-wrap: balance; }
+  h1 span { color: var(--accent); }
+  .choix { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 8px 10px; align-items: center; }
+  .choix label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--texte2); }
+  select { width: 100%; background: var(--fond2); color: var(--texte); border: 1px solid var(--trait);
+    border-radius: 8px; padding: 8px 10px; font: inherit; cursor: pointer; }
+  .fiche { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--texte2);
+    font-variant-numeric: tabular-nums; }
+  .fiche b { color: var(--texte); font-weight: 600; }
+  .bandeau { display: none; padding: 9px 12px; border-radius: 8px; font-size: 13px; }
+  .bandeau.alerte { display: block; background: rgba(242, 181, 107, .12); color: var(--alerte);
+    border: 1px solid rgba(242, 181, 107, .35); }
+  .bandeau.ok { display: block; background: rgba(143, 211, 182, .1); color: var(--accent);
+    border: 1px solid rgba(143, 211, 182, .3); }
+  .aide { font-size: 12.5px; color: var(--texte2); }
+  .aide kbd { font: 11px ui-monospace, monospace; background: var(--fond3); border: 1px solid var(--trait);
+    border-radius: 4px; padding: 1px 5px; color: var(--texte); }
+  .saisie { display: flex; gap: 10px; }
+  .saisie textarea { flex: 1; background: var(--fond2); color: var(--texte); border: 1px solid var(--trait);
+    border-radius: 10px; padding: 10px 12px; font: inherit; resize: none; height: 64px; }
+  .saisie textarea:focus { border-color: var(--accent); outline: none; }
+  .saisie button { background: var(--accent); color: var(--accent-encre); border: 0; border-radius: 10px;
+    padding: 0 18px; font-weight: 700; }
+  .liste { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+  .note { display: grid; grid-template-columns: 138px 1fr auto; gap: 12px; align-items: start;
+    background: var(--fond2); border: 1px solid var(--trait); border-radius: 10px; padding: 9px 12px;
+    cursor: pointer; }
+  .note:hover { border-color: var(--accent); }
+  .note .t { font-family: ui-monospace, monospace; color: var(--accent); font-size: 12.5px;
+    font-weight: 700; white-space: nowrap; padding-top: 2px; font-variant-numeric: tabular-nums; }
+  .note .txt { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .note .x { background: none; border: 0; color: var(--texte2); font-size: 15px; padding: 0 2px; }
+  .note .x:hover { color: var(--danger); }
+  .vide { color: var(--texte2); font-size: 13px; padding: 12px 4px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .actions button { background: var(--fond3); color: var(--texte); border: 1px solid var(--trait);
+    border-radius: 9px; padding: 9px 14px; font-weight: 600; font-size: 13px; }
+  .actions button:hover { border-color: var(--accent); }
+  .actions .principal { background: var(--accent); color: var(--accent-encre); border-color: transparent; font-weight: 700; }
+  .actions .danger:hover { border-color: var(--danger); color: var(--danger); }
+  .sauve { font-size: 12px; color: var(--texte2); margin-left: auto; font-variant-numeric: tabular-nums; }
+  .sauve.ko { color: var(--danger); font-weight: 700; }
+  .toast { position: fixed; bottom: 16px; right: 16px; background: var(--accent); color: var(--accent-encre);
+    font-weight: 700; padding: 9px 16px; border-radius: 9px; opacity: 0; transition: opacity .25s; pointer-events: none; }
+  @media (max-width: 900px) { body { grid-template-columns: 1fr; grid-template-rows: 45vh 1fr; } }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body>
+  <section class="lecteur">
+    <video id="v" preload="auto" playsinline></video>
+    <div class="frise">
+      <div class="marques" id="marques"></div>
+      <input type="range" id="frise" min="0" max="10000" value="0" aria-label="Position dans la video">
+    </div>
+    <div class="cmd">
+      <button id="m1s" title="Reculer d’une seconde (Shift+←)">−1 s</button>
+      <button id="m1f" title="Image precedente (←)">−1 img</button>
+      <button id="lire" class="lire" title="Lecture / pause (Espace)">▶</button>
+      <button id="p1f" title="Image suivante (→)">+1 img</button>
+      <button id="p1s" title="Avancer d’une seconde (Shift+→)">+1 s</button>
+      <div class="tc" id="tc">00:00.000 · f0000</div>
+      <div class="vit" id="vit" title="Vitesse de lecture, touches [ et ]"></div>
+    </div>
+    <div class="etat" id="etat">chargement…</div>
+  </section>
+
+  <section class="retours">
+    <h1>Retours à la frame · <span id="titre">…</span></h1>
+    <div class="choix">
+      <label for="video">Vidéo</label>
+      <select id="video"></select>
+      <label for="rendu">Rendu</label>
+      <select id="rendu"></select>
+    </div>
+    <div class="fiche" id="fiche"></div>
+    <div class="bandeau" id="bandeau"></div>
+    <div class="aide">Arrête la vidéo sur l’image exacte, écris ce qui ne va pas, <kbd>Entrée</kbd>.
+      Une note = une demande : deux problèmes, deux notes. Clique une note pour y revenir.
+      Tout est écrit dans <code>2_habillage/retours/</code>, la session le lit avec <code>tools/retours.py</code>.
+      <kbd>Espace</kbd> lecture · <kbd>←</kbd> <kbd>→</kbd> image par image · <kbd>↑</kbd> écrire</div>
+    <div class="saisie">
+      <textarea id="txt" placeholder="Ce qui ne va pas sur cette image…" aria-label="Nouveau retour"></textarea>
+      <button id="ajouter">Ajouter</button>
+    </div>
+    <div class="liste" id="liste"></div>
+    <div class="actions">
+      <button id="copier" class="principal">Copier pour la session</button>
+      <button id="traite">Marquer traité</button>
+      <button id="effacer" class="danger">Tout effacer</button>
+      <span class="sauve" id="sauve"></span>
+    </div>
+  </section>
+  <div class="toast" id="toast">Copié</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const v = $("v"), tc = $("tc"), frise = $("frise"), marques = $("marques"), liste = $("liste");
+  const txt = $("txt"), selV = $("video"), selR = $("rendu"), fiche = $("fiche"), bandeau = $("bandeau");
+  const btnLire = $("lire"), etat = $("etat"), sauve = $("sauve"), btnTraite = $("traite");
+
+  const qs = new URLSearchParams(location.search);
+  let DATA = { videos: [] };
+  let video = qs.get("video") || "", rendu = qs.get("rendu") || "";
+  let FPS = 60, INFO = {}, notes = [], lot = null, nonSauve = false;
+
+  const enc = (s) => encodeURIComponent(s);
+  const pad = (n, l) => String(n).padStart(l, "0");
+  const fmt = (t) => {
+    const s = Math.max(0, Number(t) || 0);
+    return pad(Math.floor(s / 60), 2) + ":" + pad(Math.floor(s % 60), 2) + "." +
+      pad(Math.floor((s % 1) * 1000), 3) + " · f" + pad(Math.round(s * FPS), 4);
+  };
+  const dateFr = (epoch) => new Date(epoch * 1000).toLocaleString("fr-FR",
+    { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+
+  /* ---------------------------------------------------------------- donnees */
+  async function charger() {
+    DATA = await (await fetch("/api/videos")).json();
+    const vs = DATA.videos;
+    selV.innerHTML = "";
+    const parSerie = {};
+    for (const x of vs) (parSerie[x.serie] ||= []).push(x);
+    for (const serie of Object.keys(parSerie).sort()) {
+      const g = document.createElement("optgroup"); g.label = serie;
+      for (const x of parSerie[serie]) {
+        const o = document.createElement("option"); o.value = x.dossier;
+        o.textContent = x.dossier + (x.retours.ouverts ? "  ·  " + x.retours.ouverts + " ouvert(s)" : "");
+        g.appendChild(o);
+      }
+      selV.appendChild(g);
+    }
+    if (!vs.length) { etat.textContent = "aucune vidéo avec un rendu dans _media/masters/"; return; }
+    if (!vs.some((x) => x.dossier === video)) video = vs[0].dossier;
+    selV.value = video;
+    remplirRendus();
+    await ouvrir();
+  }
+
+  function remplirRendus() {
+    const x = DATA.videos.find((y) => y.dossier === video);
+    const rs = x ? x.rendus : [];
+    selR.innerHTML = "";
+    for (const r of rs) {
+      const o = document.createElement("option"); o.value = r.nom;
+      o.textContent = r.nom + "  ·  " + dateFr(r.mtime);
+      selR.appendChild(o);
+    }
+    if (!rs.some((r) => r.nom === rendu)) rendu = rs.length ? rs[0].nom : "";
+    selR.value = rendu;
+  }
+
+  async function ouvrir() {
+    if (nonSauve && !confirm("Des retours ne sont pas enregistrés. Changer quand même ?")) {
+      selV.value = video; selR.value = rendu; return;
+    }
+    nonSauve = false;
+    $("titre").textContent = video;
+    document.title = "Review · " + video;
+    const u = new URL(location.href);
+    u.searchParams.set("video", video); u.searchParams.set("rendu", rendu);
+    history.replaceState(null, "", u);
+
+    v.src = "/media/" + enc(video) + "/" + enc(rendu);
+    INFO = await (await fetch("/api/info?video=" + enc(video) + "&rendu=" + enc(rendu))).json();
+    FPS = Number(INFO.fps) || 60;
+
+    const rep = await (await fetch("/api/retours?video=" + enc(video))).json();
+    lot = (rep.lots || []).find((l) => tige(l.rendu) === tige(rendu)) || null;
+    notes = lot ? lot.notes.map((n) => ({ t: n.t, txt: n.txt, ajoute: n.ajoute })) : [];
+    ficheRendu();
+    rendre();
+    setSauve(lot ? "enregistré · " + (lot.mis_a_jour || "").replace("T", " ") : "");
+  }
+  const tige = (nom) => String(nom || "").replace(/\.(mp4|mov|webm)$/i, "").replace(/[^A-Za-z0-9._-]+/g, "-");
+
+  function ficheRendu() {
+    const bouts = [];
+    if (INFO.largeur) bouts.push("<b>" + INFO.largeur + "×" + INFO.hauteur + "</b>");
+    if (INFO.fps) bouts.push("<b>" + INFO.fps + "</b> fps");
+    if (INFO.duree_s) bouts.push("<b>" + fmt(INFO.duree_s) + "</b> · " + Math.round(INFO.duree_s * FPS) + " frames");
+    if (INFO.taille) bouts.push((INFO.taille / 1048576).toFixed(1) + " Mo");
+    if (INFO.mtime) bouts.push("fichier du <b>" + dateFr(INFO.mtime) + "</b>");
+    fiche.innerHTML = bouts.join("<span>·</span>");
+
+    bandeau.className = "bandeau";
+    if (lot && lot.rendu_mtime && INFO.mtime && (lot.rendu_mtime !== INFO.mtime || lot.rendu_taille !== INFO.taille)) {
+      bandeau.className = "bandeau alerte";
+      bandeau.textContent = "Ce rendu a été ré-écrit sous le même nom depuis ces retours (notes du " +
+        (lot.mis_a_jour || "?").replace("T", " ") + ", fichier du " + dateFr(INFO.mtime) +
+        "). Les instants peuvent avoir bougé : relire avant d’en ajouter.";
+    } else if (lot && lot.traite) {
+      bandeau.className = "bandeau ok";
+      bandeau.textContent = "Lot marqué traité le " + (lot.traite_le || "?").replace("T", " ") +
+        ". Ajouter une note le rouvre.";
+    }
+    btnTraite.textContent = lot && lot.traite ? "Rouvrir" : "Marquer traité";
+  }
+
+  /* ---------------------------------------------------------------- ecriture */
+  let minuterie = null;
+  function sauver() {
+    nonSauve = true;
+    clearTimeout(minuterie);
+    setSauve("…");
+    minuterie = setTimeout(async () => {
+      try {
+        const r = await fetch("/api/retours", { method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ video, rendu, notes, fps: FPS, duree_s: INFO.duree_s || null }) });
+        const b = await r.json();
+        if (!r.ok) throw new Error(b.erreur || r.status);
+        lot = b.lot; nonSauve = false;
+        setSauve("enregistré · " + (lot.mis_a_jour || "").replace("T", " "));
+        ficheRendu();
+        rafraichirCompteurs();
+      } catch (e) {
+        setSauve("NON ENREGISTRÉ : " + e.message, true);
+      }
+    }, 500);
+  }
+  function setSauve(t, ko) { sauve.textContent = t; sauve.className = "sauve" + (ko ? " ko" : ""); }
+  window.addEventListener("beforeunload", (e) => { if (nonSauve) { e.preventDefault(); e.returnValue = ""; } });
+
+  async function rafraichirCompteurs() {
+    try {
+      DATA = await (await fetch("/api/videos")).json();
+      const x = DATA.videos.find((y) => y.dossier === video);
+      const opt = [...selV.options].find((o) => o.value === video);
+      if (x && opt) opt.textContent = x.dossier + (x.retours.ouverts ? "  ·  " + x.retours.ouverts + " ouvert(s)" : "");
+    } catch (e) { /* sans gravite */ }
+  }
+
+  /* ---------------------------------------------------------------- rendu de la liste */
+  function rendre() {
+    notes.sort((a, b) => a.t - b.t);
+    liste.innerHTML = ""; marques.innerHTML = "";
+    if (!notes.length) {
+      const d = document.createElement("div"); d.className = "vide";
+      d.textContent = "Aucun retour sur ce rendu."; liste.appendChild(d);
+    }
+    notes.forEach((n, i) => {
+      const d = document.createElement("div"); d.className = "note";
+      const t = document.createElement("span"); t.className = "t"; t.textContent = fmt(n.t);
+      const x = document.createElement("span"); x.className = "txt"; x.textContent = n.txt;
+      const b = document.createElement("button"); b.className = "x"; b.title = "Supprimer"; b.textContent = "✕";
+      b.addEventListener("click", (e) => { e.stopPropagation(); notes.splice(i, 1); sauver(); rendre(); });
+      d.append(t, x, b);
+      d.addEventListener("click", () => { v.pause(); v.currentTime = n.t; });
+      liste.appendChild(d);
+      if (v.duration) {
+        const m = document.createElement("span");
+        m.style.left = (n.t / v.duration * 100) + "%"; m.title = fmt(n.t) + " " + n.txt;
+        m.addEventListener("click", () => { v.pause(); v.currentTime = n.t; });
+        marques.appendChild(m);
+      }
+    });
+  }
+
+  function ajouter() {
+    const s = txt.value.trim();
+    if (!s) return;
+    // Pas d’horodatage ici : c’est le SERVEUR qui pose `ajoute`, sur la même horloge que `cree`
+    // et `mis_a_jour`. Un `toISOString()` donnerait de l’UTC dans un fichier en heure locale.
+    notes.push({ t: Math.round(v.currentTime * 1000) / 1000, txt: s });
+    txt.value = "";
+    sauver(); rendre();
+  }
+
+  /* ---------------------------------------------------------------- lecteur */
+  const pas = (n) => { v.pause(); v.currentTime = Math.max(0, Math.min(v.duration || 1e9, v.currentTime + n / FPS)); };
+  $("m1f").addEventListener("click", () => pas(-1));
+  $("p1f").addEventListener("click", () => pas(1));
+  $("m1s").addEventListener("click", () => pas(-FPS));
+  $("p1s").addEventListener("click", () => pas(FPS));
+  btnLire.addEventListener("click", () => (v.paused ? v.play() : v.pause()));
+  v.addEventListener("play", () => (btnLire.textContent = "⏸"));
+  v.addEventListener("pause", () => (btnLire.textContent = "▶"));
+  v.addEventListener("timeupdate", () => {
+    tc.textContent = fmt(v.currentTime);
+    if (v.duration) frise.value = Math.round(v.currentTime / v.duration * 10000);
+  });
+  frise.addEventListener("input", () => { if (v.duration) v.currentTime = frise.value / 10000 * v.duration; });
+  v.addEventListener("loadedmetadata", () => { v.playbackRate = vitesse; majEtat(); rendre(); });
+  v.addEventListener("error", () => { etat.textContent = "vidéo illisible (codec ou fichier tronqué) : check_movs.py sur le composite"; });
+
+  const VITESSES = [0.5, 1, 1.25, 1.5, 2];
+  let vitesse = 1;
+  try { const m = parseFloat(localStorage.getItem("review.vitesse")); if (VITESSES.includes(m)) vitesse = m; } catch (e) {}
+  const boiteVit = $("vit");
+  function poserVitesse(x) {
+    vitesse = x; v.playbackRate = x;
+    try { localStorage.setItem("review.vitesse", String(x)); } catch (e) {}
+    [...boiteVit.children].forEach((b) => b.classList.toggle("on", parseFloat(b.dataset.v) === x));
+    majEtat();
+  }
+  for (const x of VITESSES) {
+    const b = document.createElement("button"); b.dataset.v = String(x);
+    b.textContent = String(x).replace(".", ",") + "×";
+    b.addEventListener("click", () => poserVitesse(x));
+    boiteVit.appendChild(b);
+  }
+  poserVitesse(vitesse);
+  function majEtat() {
+    if (!v.duration || !isFinite(v.duration)) return;
+    const reste = v.duration / vitesse;
+    etat.textContent = "prêt · " + fmt(v.duration) + " · " + v.videoWidth + "×" + v.videoHeight +
+      (vitesse === 1 ? "" : " · à " + String(vitesse).replace(".", ",") + "× : " +
+        pad(Math.floor(reste / 60), 2) + ":" + pad(Math.floor(reste % 60), 2));
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.target === txt) return;
+    if (e.target.tagName === "SELECT") return;
+    if (e.code === "Space") { e.preventDefault(); v.paused ? v.play() : v.pause(); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); pas(e.shiftKey ? -FPS : -1); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); pas(e.shiftKey ? FPS : 1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); txt.focus(); }
+    else if (e.key === "[" || e.key === "]") {
+      e.preventDefault();
+      const i = VITESSES.indexOf(vitesse);
+      poserVitesse(VITESSES[Math.max(0, Math.min(VITESSES.length - 1, i + (e.key === "]" ? 1 : -1)))]);
+    }
+  });
+
+  /* ---------------------------------------------------------------- actions */
+  $("ajouter").addEventListener("click", ajouter);
+  txt.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ajouter(); } });
+  selV.addEventListener("change", () => { video = selV.value; rendu = ""; remplirRendus(); ouvrir(); });
+  selR.addEventListener("change", () => { rendu = selR.value; ouvrir(); });
+
+  $("copier").addEventListener("click", async () => {
+    const lignes = [
+      "RETOURS REVIEW",
+      "Video   : " + video,
+      "Rendu   : _media/masters/" + rendu + (INFO.mtime ? "  (fichier du " + dateFr(INFO.mtime) + ")" : ""),
+      "Format  : " + (INFO.largeur ? INFO.largeur + "x" + INFO.hauteur + " · " : "") + FPS + " fps" +
+        (INFO.duree_s ? " · " + fmt(INFO.duree_s) : ""),
+      "Retours : " + notes.length + "  (fichier : 2_habillage/retours/" + tige(rendu) + ".json)",
+      "", ...notes.map((n, i) => (i + 1) + ". " + fmt(n.t) + " (t=" + n.t.toFixed(3) + "s) - " + n.txt),
+      "", "Lecture avec contexte : python tools/retours.py " + video + " --rendu " + rendu,
+    ];
+    try { await navigator.clipboard.writeText(lignes.join("\n")); } catch (e) { alert(lignes.join("\n")); return; }
+    const t = $("toast"); t.style.opacity = 1; setTimeout(() => (t.style.opacity = 0), 1200);
+  });
+
+  btnTraite.addEventListener("click", async () => {
+    if (!lot) { alert("Aucun lot enregistré pour ce rendu."); return; }
+    const traite = !lot.traite;
+    const r = await fetch("/api/retours/traite", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ video, rendu, traite }) });
+    const b = await r.json();
+    if (!r.ok) { alert(b.erreur || r.status); return; }
+    lot = b.lot; ficheRendu(); rafraichirCompteurs();
+  });
+
+  $("effacer").addEventListener("click", () => {
+    if (notes.length && confirm("Effacer les " + notes.length + " retour(s) de ce rendu ?")) { notes = []; sauver(); rendre(); }
+  });
+
+  charger().catch((e) => { etat.textContent = "serveur injoignable : " + e.message; });
+})();
+</script>
+</body>
+</html>
